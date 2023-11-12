@@ -5,4 +5,4 @@ Skład grupy:
 Piotr Jasik, 259087\
 Michał Malewicz, 259509\
 Igor Stalmach, 259116\
-Mateusz Suryś, 259160\
+Mateusz Suryś, 259160
