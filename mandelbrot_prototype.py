@@ -23,7 +23,7 @@ def calculate_light_intensity(normal_vector, light_parameters):
 
 # Define a function to create a color table using sine waves for visualizing the Mandelbrot set.
 @njit
-def sin_colortable(rgb=(.85, .0, .15), column_num=2 ** 12):
+def colortable(rgb=(.85, .0, .15), column_num=2 ** 12):
     def colormap(x, rgb):
         # Calculate color values based on sine functions.
         y = np.column_stack(((x + rgb[0]) * 2 * math.pi,
@@ -63,9 +63,9 @@ def smooth_iter(c, max_iter):
 # Define a function to color a pixel based on the iteration count.
 @jit
 def color_pixel(matrix, n_iter, colortable, n_cycle, normal_vector, lightning):
-    ncol = colortable.shape[0] - 1  # Number of colors in the color table.
+    n_col = colortable.shape[0] - 1  # Number of colors in the color table.
     n_iter = math.sqrt(n_iter) % n_cycle / n_cycle  # Normalize iteration count.
-    col_i = round(n_iter * ncol)  # Index for the color table.
+    col_i = round(n_iter * n_col)  # Index for the color table.
     
     # Calculate the brightness based on the normal vector and lighting parameters.
     brightness = calculate_light_intensity(normal_vector, lightning)
@@ -88,10 +88,10 @@ def compute_set(real_part, imaginary_part, max_iter, colortable, n_cycle, lightn
         for y in range(y_pixels):
             c = complex(real_part[x], imaginary_part[y])  # Represent the pixel as a complex number.
             # Calculate the iteration count and normal vector for this point.
-            niter, normal_vector = smooth_iter(c, max_iter)
+            n_iter, normal_vector = smooth_iter(c, max_iter)
             # Color the pixel if the iteration count is greater than 0.
-            if niter > 0:
-                color_pixel(mat[y, x], niter, colortable, n_cycle, normal_vector, lightning)
+            if n_iter > 0:
+                color_pixel(mat[y, x], n_iter, colortable, n_cycle, normal_vector, lightning)
     return mat  # Return the colored image matrix.
 
 
@@ -108,10 +108,10 @@ def compute_set_gpu(matrix, x_min, x_max, y_min, y_max, max_iter, colortable, n_
         cim = y_min + y / (matrix.shape[0] - 1) * (y_max - y_min)
         c = complex(c_real, cim)
         # Calculate the iteration count and normal vector for this point.
-        niter, normal_vector = smooth_iter(c, max_iter)
+        n_iter, normal_vector = smooth_iter(c, max_iter)
         # Color the pixel if the iteration count is greater than 0.
-        if niter > 0:
-            color_pixel(matrix[y, x], niter, colortable, n_cycle, normal_vector, lightning)
+        if n_iter > 0:
+            color_pixel(matrix[y, x], n_iter, colortable, n_cycle, normal_vector, lightning)
 
 
 # Define a class for generating and visualizing Mandelbrot sets.
@@ -140,7 +140,7 @@ class Mandelbrot:
         self.os = oversampling
         self.rgb = rgb
         self.y_pixels = round(self.x_pixels / (self.coord[1] - self.coord[0]) * (self.coord[3] - self.coord[2]))
-        self.colortable = sin_colortable(self.rgb)
+        self.colortable = colortable(self.rgb)
         self.lightning = np.array(lightning)
         # Convert from degrees to radians.
         self.lightning[0] = 2 * math.pi * self.lightning[0] / 360
